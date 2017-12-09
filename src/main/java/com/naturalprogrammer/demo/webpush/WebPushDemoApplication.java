@@ -2,38 +2,33 @@ package com.naturalprogrammer.demo.webpush;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.PublicKey;
 import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
-import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
-import org.bouncycastle.jce.spec.ECPublicKeySpec;
-import org.bouncycastle.math.ec.ECPoint;
 import org.jose4j.lang.JoseException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import nl.martijndwars.webpush.Notification;
 import nl.martijndwars.webpush.PushService;
-import nl.martijndwars.webpush.Utils;
 
 @SpringBootApplication
 @RestController
 public class WebPushDemoApplication {
 	
-	public static class MySubscription {
+	public static class WebPushSubscription {
 		
 		private String notificationEndPoint;
 		private String publicKey;
@@ -59,16 +54,19 @@ public class WebPushDemoApplication {
 		}		
 	}
 	
-	public static class Message {
+	public static class WebPushMessage {
 		
 		public String title;
 		public String clickTarget;
 		public String message;
 	}
-	
+
 	private static PushService pushService = new PushService();
 	
-	private Map<String, MySubscription> subscriptions = new ConcurrentHashMap<>();
+	private Map<String, WebPushSubscription> subscriptions = new ConcurrentHashMap<>();
+	
+	@Autowired
+	private ObjectMapper objectMapper;
 
 	public static void main(String[] args) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeySpecException {
 		
@@ -84,27 +82,27 @@ public class WebPushDemoApplication {
 	}
 	
 	@PostMapping("/subscribe")
-	public void subscribe(MySubscription subscription) {
+	public void subscribe(WebPushSubscription subscription) {
 		
 		subscriptions.put(subscription.notificationEndPoint, subscription);
 	}
 	
 	@PostMapping("/unsubscribe")
-	public void unsubscribe(MySubscription subscription) {
+	public void unsubscribe(WebPushSubscription subscription) {
 		
 		subscriptions.remove(subscription.notificationEndPoint);
 	}
 	
 	@PostMapping("/notify-all")
-	public String notifyAll(@RequestBody String message) throws GeneralSecurityException, IOException, JoseException, ExecutionException, InterruptedException {
+	public WebPushMessage notifyAll(@RequestBody WebPushMessage message) throws GeneralSecurityException, IOException, JoseException, ExecutionException, InterruptedException {
 		
-		for (MySubscription subscription: subscriptions.values()) {
+		for (WebPushSubscription subscription: subscriptions.values()) {
 			
 			Notification notification = new Notification(
 					subscription.getNotificationEndPoint(),
 					subscription.getPublicKey(),
 					subscription.getAuth(),
-					message);
+					objectMapper.writeValueAsBytes(message));
 			
 			pushService.send(notification);			
 		}
