@@ -39,33 +39,6 @@ public class WebPushDemoApplication {
 		private String publicKey;
 		private String auth;
 		
-	    /**
-	     * Returns the base64 encoded public key string as a byte[]
-	     */
-	    public byte[] getKeyAsBytes() {
-	        return Base64.getDecoder().decode(publicKey);
-	    }
-
-	    /**
-	     * Returns the base64 encoded auth string as a byte[]
-	     */
-	    public byte[] getAuthAsBytes() {
-	        return Base64.getDecoder().decode(auth);
-	    }
-
-	    /**
-	     * Returns the base64 encoded public key as a PublicKey object
-	     */
-	    public PublicKey getUserPublicKey() throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
-	    	
-	        KeyFactory kf = KeyFactory.getInstance("ECDH", BouncyCastleProvider.PROVIDER_NAME);
-	        ECNamedCurveParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256r1");
-	        ECPoint point = ecSpec.getCurve().decodePoint(getKeyAsBytes());
-	        ECPublicKeySpec pubSpec = new ECPublicKeySpec(point, ecSpec);
-
-	        return kf.generatePublic(pubSpec);
-	    }
-
 	    public String getNotificationEndPoint() {
 			return notificationEndPoint;
 		}
@@ -104,8 +77,8 @@ public class WebPushDemoApplication {
 		      Security.addProvider(new BouncyCastleProvider());
 		  }
 		
-		pushService.setPublicKey(Utils.loadPublicKey("BBYCxwATP2vVgw7mMPHJfT6bZrJP2iUV7OP_oxHzEcNFenrX66D8G34CdEmVULNg4WJXfjkeyT0AT9LwavpN8M4="));
-		pushService.setPrivateKey(Utils.loadPrivateKey("AKYLHgp-aV3kOys9Oy6QgxNI6OGIlOB3G6kjGvhl57j_"));
+		pushService.setPublicKey("BBYCxwATP2vVgw7mMPHJfT6bZrJP2iUV7OP_oxHzEcNFenrX66D8G34CdEmVULNg4WJXfjkeyT0AT9LwavpN8M4=");
+		pushService.setPrivateKey("AKYLHgp-aV3kOys9Oy6QgxNI6OGIlOB3G6kjGvhl57j_");
 		
 		SpringApplication.run(WebPushDemoApplication.class, args);
 	}
@@ -123,14 +96,14 @@ public class WebPushDemoApplication {
 	}
 	
 	@PostMapping("/notify-all")
-	public byte[] notifyAll(@RequestBody byte[] message) throws GeneralSecurityException, IOException, JoseException, ExecutionException, InterruptedException {
+	public String notifyAll(@RequestBody String message) throws GeneralSecurityException, IOException, JoseException, ExecutionException, InterruptedException {
 		
 		for (MySubscription subscription: subscriptions.values()) {
 			
 			Notification notification = new Notification(
 					subscription.getNotificationEndPoint(),
-					subscription.getUserPublicKey(),
-					subscription.getAuthAsBytes(),
+					subscription.getPublicKey(),
+					subscription.getAuth(),
 					message);
 			
 			pushService.send(notification);			
