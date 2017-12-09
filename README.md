@@ -1,11 +1,12 @@
-= Java WebPush Demo application
+# Java WebPush Demo application
+
 
 * Java WebPush demo
 * https://github.com/web-push-libs/webpush-java used
 * Front-end copied from https://github.com/thihara/web_push_notifications/tree/master/static
 * Spring Boot is used for creating the backend
 
-== Try it out
+## Try it out
 
 * Checkout and run the application
 * Visit http://localhost:8080 and then click on subscribe
@@ -23,7 +24,7 @@ curl -X POST \
 }'
 ```
 
-== References
+## References
 
 https://dzone.com/articles/web-push-notifications-1
 https://github.com/web-push-libs/webpush-java
